@@ -1,0 +1,118 @@
+import { NextFunction, Request, Response } from "express";
+import User from "../models/user.model";
+
+//! register
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { full_name, email, password, phone } = req.body;
+    if (!full_name) {
+      const error: any = new Error("full_name is required");
+      error.statusCode = 400;
+      error.status = "fail";
+      throw error;
+    }
+    if (!email) {
+      const error: any = new Error("email is required");
+      error.statusCode = 400;
+      error.status = "fail";
+      throw error;
+    }
+    if (!password) {
+      const error: any = new Error("password is required");
+      error.statusCode = 400;
+      error.status = "fail";
+      throw error;
+    }
+
+    //* create User instance
+    const user = new User({ full_name, email, password, phone });
+
+    //! handle profile image
+
+    //* save user
+    await user.save();
+
+    //* success response
+    res.status(201).json({
+      message: "Account created",
+      data: user,
+      success: true,
+      status: "success",
+    });
+  } catch (error: any) {
+    next({
+      message: error?.message || "Something went wrong",
+      status: error?.status || "error",
+      success: false,
+      data: null,
+      statusCode: error?.statusCode || 500,
+    });
+  }
+};
+
+//! login
+
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  //* login
+
+  try {
+      const{email,password}=req.body
+
+          if (!email) {
+      const error: any = new Error("email is required");
+      error.statusCode = 400;
+      error.status = "fail";
+      throw error;
+    }
+    if (!password) {
+      const error: any = new Error("password is required");
+      error.statusCode = 400;
+      error.status = "fail";
+      throw error;
+    }
+
+    const user=await User.findOne({email:email})
+    if(!user){
+      const error:any=new Error("Email or password doesn't match");
+      error.statusCode=400;
+      error.status="fail";
+      throw error;
+    }
+
+    const isPasswordMatched=password===user.password;
+    if(!isPasswordMatched){
+            const error:any=new Error("Email or password doesn't match");
+      error.statusCode=400;
+      error.status="fail";
+      throw error
+    }
+
+    //* success response
+    res.status(201).json({
+      message:"Login Success",
+      data: user,
+      status:"success",
+
+    })
+  } catch (error: any) {
+    next({
+      message: error?.messa || "SOMETHING WENT WRONG",
+      status: error?.status || "error",
+      success: false,
+      data: null,
+      statusCode: error?.statusCode || 500,
+    });
+  }
+}; //! update profile
+
+//! get profile
+
+//! change password

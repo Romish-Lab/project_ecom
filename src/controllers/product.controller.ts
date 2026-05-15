@@ -1,24 +1,24 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../models/user.model";
-// crud user
+import Product from "../models/product.models";
 
-//! get all users
-export const getAll = async (
+//! get all products
+export const getAllProducts = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
     const filter = {};
-    //* get all users query
-    const users = await User.find(filter);
+
+    //* get all products query
+    const products = await Product.find(filter);
 
     //* success response
     res.status(200).json({
-      message: "All users fetched",
-      data: users,
+      message: "All products fetched",
+      data: products,
       success: true,
-      status: "succcess",
+      status: "success",
     });
   } catch (error: any) {
     next({
@@ -31,31 +31,32 @@ export const getAll = async (
   }
 };
 
-//! get by id
-export const getById = async (
+//! get product by id
+export const getProductById = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    //* user id
+    //* product id
     const { id } = req.params;
 
     //* db query
-    const user = await User.findOne({ _id: id });
+    const product = await Product.findOne({ _id: id });
 
-    //* user not found error
-    if (!user) {
-      const error: any = new Error("User not found ");
+    //* product not found error
+    if (!product) {
+      const error: any = new Error("Product not found");
       error.statusCode = 404;
       error.status = "fail";
+
       throw error;
     }
 
     //* success response
     res.status(200).json({
-      message: `User ${id} fetched`,
-      data: user,
+      message: `Product ${id} fetched`,
+      data: product,
       success: true,
       status: "success",
     });
@@ -70,32 +71,63 @@ export const getById = async (
   }
 };
 
-//! delete user
-
-export const deleteUser = async (
+//! create product
+export const createProduct = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    //* user id
+    //* request body
+    const body = req.body;
+
+    //* create product
+    const product = await Product.create(body);
+
+    //* success response
+    res.status(201).json({
+      message: "Product created successfully",
+      data: product,
+      success: true,
+      status: "success",
+    });
+  } catch (error: any) {
+    next({
+      message: error?.message || "Something went wrong",
+      status: "error",
+      success: false,
+      data: null,
+      statusCode: error?.statusCode || 500,
+    });
+  }
+};
+
+//! delete product
+export const deleteProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    //* product id
     const { id } = req.params;
 
     //* db query
-    const user = await User.findByIdAndDelete(id);
+    const product = await Product.findByIdAndDelete(id);
 
-    //* user not found error
-    if (!user) {
-      const error: any = new Error("User not found");
+    //* product not found error
+    if (!product) {
+      const error: any = new Error("Product not found");
       error.statusCode = 404;
       error.status = "fail";
+
       throw error;
     }
 
     //* success response
     res.status(200).json({
-      message: `User ${id} deleted`,
-      data: user,
+      message: `Product ${id} deleted`,
+      data: product,
       success: true,
       status: "success",
     });
