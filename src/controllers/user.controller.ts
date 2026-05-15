@@ -70,6 +70,38 @@ export const getById = async (
   }
 };
 
+
+//! create user
+export const createUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    //* request body
+    const body = req.body;
+
+    //* create user in db
+    const user = await User.create(body);
+
+    //* success response
+    res.status(201).json({
+      message: "User created successfully",
+      data: user,
+      success: true,
+      status: "success",
+    });
+  } catch (error: any) {
+    next({
+      message: error?.message || "Something went wrong",
+      status: "error",
+      success: false,
+      data: null,
+      statusCode: error?.statusCode || 500,
+    });
+  }
+};
+
 //! delete user
 
 export const deleteUser = async (
