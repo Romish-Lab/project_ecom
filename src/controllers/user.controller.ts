@@ -1,43 +1,31 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import User from "../models/user.model";
+import { catchAsync } from "../utils/catchAsync.utils";
+import AppError from "../utils/appError.utils";
+import { sendResponse } from "../utils/sendResponse.utils";
+
 // crud user
 
 //! get all users
-export const getAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const getAll = catchAsync(
+  async (req: Request, res: Response) => {
     const filter = {};
+
     //* get all users query
     const users = await User.find(filter);
 
     //* success response
-    res.status(200).json({
+    sendResponse(res, {
       message: "All users fetched",
       data: users,
-      success: true,
-      status: "succcess",
+      statusCode: 200,
     });
-  } catch (error: any) {
-    next({
-      message: error?.message || "Something went wrong",
-      status: "error",
-      success: false,
-      data: null,
-      statusCode: error?.statusCode || 500,
-    });
-  }
-};
+  },
+);
 
 //! get by id
-export const getById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const getById = catchAsync(
+  async (req: Request, res: Response) => {
     //* user id
     const { id } = req.params;
 
@@ -46,38 +34,21 @@ export const getById = async (
 
     //* user not found error
     if (!user) {
-      const error: any = new Error("User not found ");
-      error.statusCode = 404;
-      error.status = "fail";
-      throw error;
+      throw new AppError("User not found", 404);
     }
 
     //* success response
-    res.status(200).json({
+    sendResponse(res, {
       message: `User ${id} fetched`,
       data: user,
-      success: true,
-      status: "success",
+      statusCode: 200,
     });
-  } catch (error: any) {
-    next({
-      message: error?.message || "Something went wrong",
-      status: error?.status || "error",
-      success: false,
-      data: null,
-      statusCode: error?.statusCode || 500,
-    });
-  }
-};
-
+  },
+);
 
 //! create user
-export const createUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const createUser = catchAsync(
+  async (req: Request, res: Response) => {
     //* request body
     const body = req.body;
 
@@ -85,31 +56,17 @@ export const createUser = async (
     const user = await User.create(body);
 
     //* success response
-    res.status(201).json({
+    sendResponse(res, {
       message: "User created successfully",
       data: user,
-      success: true,
-      status: "success",
+      statusCode: 201,
     });
-  } catch (error: any) {
-    next({
-      message: error?.message || "Something went wrong",
-      status: "error",
-      success: false,
-      data: null,
-      statusCode: error?.statusCode || 500,
-    });
-  }
-};
+  },
+);
 
 //! delete user
-
-export const deleteUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const deleteUser = catchAsync(
+  async (req: Request, res: Response) => {
     //* user id
     const { id } = req.params;
 
@@ -118,26 +75,42 @@ export const deleteUser = async (
 
     //* user not found error
     if (!user) {
-      const error: any = new Error("User not found");
-      error.statusCode = 404;
-      error.status = "fail";
-      throw error;
+      throw new AppError("User not found", 404);
     }
 
     //* success response
-    res.status(200).json({
+    sendResponse(res, {
       message: `User ${id} deleted`,
       data: user,
-      success: true,
-      status: "success",
+      statusCode: 200,
     });
-  } catch (error: any) {
-    next({
-      message: error?.message || "Something went wrong",
-      status: error?.status || "error",
-      success: false,
-      data: null,
-      statusCode: error?.statusCode || 500,
+  },
+);
+
+//! update user
+export const updateUser = catchAsync(
+  async (req: Request, res: Response) => {
+    //* user id
+    const { id } = req.params;
+
+    //* request body
+    const body = req.body;
+
+    //* update user
+    const user = await User.findByIdAndUpdate(id, body, {
+      new: true,
     });
-  }
-};
+
+    //* user not found error
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    //* success response
+    sendResponse(res, {
+      message: `User ${id} updated successfully`,
+      data: user,
+      statusCode: 200,
+    });
+  },
+);
