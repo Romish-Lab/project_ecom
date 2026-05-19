@@ -22,12 +22,11 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
     },
-   role:{
-    type:String,
-    enum:["ADMIN","USER","SUPER_ADMIN"],
-    default:"USER",
-
-   }
+    Role: {
+      type: String,
+      enum: ["ADMIN", "USER", "SUPER_ADMIN"],
+      default: "USER",
+    },
     //! profile_image
   },
   { timestamps: true },

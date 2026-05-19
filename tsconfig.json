@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "esModuleInterop": true
   },
-  "include": ["src"]
+  "include": ["src", "routes", "utils", "app.ts", "server.ts", "middlewares", "models", "src/controllers", "src/config"]
 }

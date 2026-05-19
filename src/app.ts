@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes";
 import productRoutes from "./routes/product.routes";
 import categoryRoutes from "./routes/category.routes";
 import brandRoutes from "./routes/brand.routes";
+import AppError from "./utils/appError.utils";
 
 //! creating express app instance
 const app = express();
@@ -37,13 +38,14 @@ app.use("/api/v1/brands", brandRoutes);
 
 //! 404 route handler
 app.use((req: Request, res: Response, next: NextFunction) => {
-  next({
-    message: "Route not found",
-    status: "fail",
-    success: false,
-    data: null,
-    statusCode: 404,
-  });
+  // next({
+    const  message= "Route not found"
+    throw new AppError(message,404)
+  //   // status: "fail",
+  //   // success: false,
+  //   // data: null,
+  //   // statusCode: 404,
+  // });
 });
 
 //! global error handler

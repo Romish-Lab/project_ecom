@@ -1,8 +1,14 @@
 import { NextFunction, Request, Response } from "express";
+
 import User from "../models/user.model";
+
 import AppError from "../utils/appError.utils";
 import { sendResponse } from "../utils/sendResponse.utils";
 import { catchAsync } from "../utils/catchAsync.utils";
+
+import { hashPassword, comparePassword } from "../utils/bcrypt.utils";
+
+import { generateJwtToken } from "../utils/jwt.utils";
 
 //! register
 export const register = catchAsync(async (req: Request, res: Response) => {
@@ -20,22 +26,30 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     throw new AppError("password is required", 400);
   }
 
-  //* create User instance
-  const user = new User({ full_name, email, password, phone });
+  //* check existing user
+  const isUserExists = await User.findOne({ email });
 
-  //! handle profile image
+  if (isUserExists) {
+    throw new AppError("Email already exists", 400);
+  }
+
+  //* create User instance
+  const user = new User({
+    full_name,
+    email,
+    password,
+    phone,
+  });
+
+  //! hash password
+  const hash = await hashPassword(password);
+
+  user.password = hash;
 
   //* save user
   await user.save();
 
   //* success response
-  // res.status(201).json({
-  // message: "Account created",
-  // data: user,
-  // success: true,
-  // status: "success",
-  // });
-
   sendResponse(res, {
     message: "Account created",
     data: user,
@@ -45,8 +59,6 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 
 //! login
 export const login = catchAsync(async (req: Request, res: Response) => {
-  //* login
-
   const { email, password } = req.body;
 
   if (!email) {
@@ -57,38 +69,46 @@ export const login = catchAsync(async (req: Request, res: Response) => {
     throw new AppError("password is required", 400);
   }
 
-  const user = await User.findOne({ email: email });
+  //* check user
+  const user = await User.findOne({ email });
 
   if (!user) {
     throw new AppError("Email or password doesn't match", 400);
   }
 
-  const isPasswordMatched = password === user.password;
+  //* compare password
+  const isPasswordMatched = await comparePassword(password, user.password);
 
   if (!isPasswordMatched) {
     throw new AppError("Email or password doesn't match", 400);
   }
 
-  //todo: generate access token
+  //* jwt payload
+  const payload = {
+    _id: user._id,
+    full_name: user.full_name,
+    email: user.email,
+    role: user.Role,
+  };
 
-  // //* success response
-  // res.status(201).json({
-  // message:"Login Success",
-  // data: user,
-  // status:"success",
-  // })
+  //* generate access token
+  const access_token = generateJwtToken(payload);
 
+  //* success response
   sendResponse(res, {
     message: "Login Success",
-    data: user,
-    statusCode: 201,
+    data: {
+      user,
+      access_token,
+    },
+    statusCode: 200,
   });
 });
 
 //! update profile
 export const update = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    // try logic
+    // todo
   },
 );
 
