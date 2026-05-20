@@ -6,8 +6,8 @@ import connectDatabase from "./config/db.config";
 import ENV_CONFIG from "./config/env.config";
 
 //! debug check (optional)
-console.log("DB_URI:", process.env.DB_URI);
-console.log("PORT:", process.env.PORT);
+// console.log("DB_URI:", process.env.DB_URI);
+// console.log("PORT:", process.env.PORT);
 
 const DB_URI = ENV_CONFIG.db_uri;
 const PORT = ENV_CONFIG.port;

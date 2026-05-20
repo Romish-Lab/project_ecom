@@ -28,6 +28,19 @@ const userSchema = new mongoose.Schema(
       default: "USER",
     },
     //! profile_image
+    //* {profile_image}:{ _id, path, public_id}
+    // cloudinary
+    profile_image: {
+      type: {
+        path: {
+          type: String,
+        },
+        public_id: {
+          type: String,
+          required: true,
+        },
+      },
+    },
   },
   { timestamps: true },
 );
