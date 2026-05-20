@@ -7,6 +7,7 @@ import {
   getById,
   updateCategory,
 } from "../controllers/category.controller";
+import { multerUploader } from "../middlewares/multer.middlewares";
 
 const router = express.Router();
 
@@ -17,7 +18,8 @@ router.get("/", getAll);
 router.get("/:id", getById);
 
 //! create category
-router.post("/", create);
+const upload= multerUploader()
+router.post("/",upload.single("category_logo"),create);
 
 //! update category
 router.put("/:id", updateCategory);

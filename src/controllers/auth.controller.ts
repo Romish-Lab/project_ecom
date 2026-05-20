@@ -13,7 +13,7 @@ import { generateJwtToken } from "../utils/jwt.utils";
 //! register
 export const register = catchAsync(async (req: Request, res: Response) => {
   const { full_name, email, password, phone } = req.body;
-// console.log(req.body)
+  // console.log(req.body)
   if (!full_name) {
     throw new AppError("full name is required", 400);
   }
@@ -108,10 +108,43 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 //! update profile
 export const update = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    // todo
+    const { id } = req.params;
+    const body = req.body;
+    const user = User.findByIdAndUpdate(id, body, {
+      new: true,
+    });
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    //! success response
+    sendResponse(res, {
+      message: `user with id${id}updated successfully`,
+      data: user,
+      statusCode: 200,
+    });
   },
 );
 
 //! get profile
 
+export const getProfile = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = await User.findById(id);
+  if (!user) {
+    throw new AppError("User not found", 201);
+  }
+  //! success response
+  sendResponse(res, {
+    message: `user with id${id}fetched successfully`,
+    data: user,
+    statusCode: 400,
+  });
+});
+
 //! change password
+ export const changePassword=catchAsync(async(req:Request,res:Response)=>{
+  const {id}=req.params;
+  const user=await User.findById(id)
+
+
+ })

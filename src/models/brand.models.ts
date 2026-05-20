@@ -13,6 +13,17 @@ const brandSchema = new mongoose.Schema(
       minlength: [5, "Description must be more than 5 characters"],
       trim: true,
     },
+    brand_logo:{
+      type:{
+        path:{
+          type:String
+        },
+        public_id:{
+          type:String,
+          required:true
+        }
+      }
+    }
   },
   {
     timestamps: true,

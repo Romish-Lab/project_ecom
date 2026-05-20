@@ -6,7 +6,8 @@ import {
   getAll,
   getById,
   updateBrand,
-} from "../controllers/brand.controller"
+} from "../controllers/brand.controller";
+import { multerUploader } from "../middlewares/multer.middlewares";
 
 const router = express.Router();
 
@@ -17,7 +18,8 @@ router.get("/", getAll);
 router.get("/:id", getById);
 
 //! create brand
-router.post("/", createBrand);
+const upload = multerUploader();
+router.post("/", upload.single("brand_logo"), createBrand);
 
 //! update brand
 router.put("/:id", updateBrand);
