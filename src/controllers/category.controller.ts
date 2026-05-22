@@ -1,37 +1,34 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import Category from "../models/category.models";
 import AppError from "../utils/appError.utils";
 import { catchAsync } from "../utils/catchAsync.utils";
 import { sendResponse } from "../utils/sendResponse.utils";
+import { sendFileToCloudinary } from "../utils/claudinady.utils";
 
-//! get all category
+//! get all categories
 export const getAll = catchAsync(async (req: Request, res: Response) => {
-  const filter = {};
+  const category = await Category.find({});
 
-  const category = await Category.find(filter);
-
-  //! success response
   sendResponse(res, {
-    message: "All category fetched",
+    message: "All categories fetched",
     data: category,
     statusCode: 200,
   });
 });
 
-//! get by id
+//! get category by id
 export const getById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const user = await Category.findOne({ _id: id });
+  const category = await Category.findById(id);
 
-  if (!user) {
+  if (!category) {
     throw new AppError("Category not found", 404);
   }
 
-  //! success response
   sendResponse(res, {
-    message: `category with ${id} fetched`,
-    data: user,
+    message: `Category with id ${id} fetched`,
+    data: category,
     statusCode: 200,
   });
 });
@@ -39,11 +36,16 @@ export const getById = catchAsync(async (req: Request, res: Response) => {
 //! create category
 export const create = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
+  const image = req.file;
 
-  //* create category
   const category = await Category.create(body);
 
-  //! success response
+  if (image) {
+    const { path, public_id } = await sendFileToCloudinary(image, "/category_logo");
+    category.category_logo = { path, public_id };
+    await category.save();
+  }
+
   sendResponse(res, {
     message: "Category created successfully",
     data: category,
@@ -51,44 +53,44 @@ export const create = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-//! delete category
-export const deleteCategory = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const category = await Category.findByIdAndDelete(id);
-
-    if (!category) {
-      throw new AppError("Category not found", 404);
-    }
-
-    sendResponse(res, {
-      message: "Category deleted successfully",
-      data: category,
-      statusCode: 200,
-    });
-  },
-);
-
 //! update category
-export const updateCategory = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
+export const updateCategory = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const body = req.body;
+  const image = req.file as Express.Multer.File;
 
-    const body = req.body;
+  const category = await Category.findByIdAndUpdate(id, body, { new: true });
 
-    const category = await Category.findByIdAndUpdate(id, body, {
-      new: true,
-    });
+  if (!category) {
+    throw new AppError("Category not found", 404);
+  }
 
-    if (!category) {
-      throw new AppError("Category not found", 404);
-    }
+  // if (image) {
+  //   const { path, public_id } = await sendFileToCloudinary(image, "/category_logo");
+  //   category.category_logo = { path, public_id };
+  //   await category.save();
+  // }
 
-    sendResponse(res, {
-      message: `category with id ${id} updated successfully`,
-      data: category,
-      statusCode: 200,
-    });
-  },
-);
+  sendResponse(res, {
+    message: `Category with id ${id} updated successfully`,
+    data: category,
+    statusCode: 200,
+  });
+});
+
+//! delete category
+export const deleteCategory = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const category = await Category.findByIdAndDelete(id);
+
+  if (!category) {
+    throw new AppError("Category not found", 404);
+  }
+
+  sendResponse(res, {
+    message: "Category deleted successfully",
+    data: category,
+    statusCode: 200,
+  });
+});
