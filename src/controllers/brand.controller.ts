@@ -3,7 +3,10 @@ import Brand from "../models/brand.models";
 import AppError from "../utils/appError.utils";
 import { catchAsync } from "../utils/catchAsync.utils";
 import { sendResponse } from "../utils/sendResponse.utils";
-import { sendFileToCloudinary } from "../utils/claudinady.utils";
+import {
+  deleteFileFromCloudinary,
+  sendFileToCloudinary,
+} from "../utils/claudinady.utils";
 //! get all brands
 export const getAll = catchAsync(async (req: Request, res: Response) => {
   const filter = {};
@@ -64,9 +67,16 @@ export const createBrand = catchAsync(async (req: Request, res: Response) => {
 //! update brand
 export const updateBrand = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-
   const body = req.body;
-
+  const image = req.file as Express.Multer.File;
+  const exixtingBrand = await Brand.findById({ _id: id });
+  if (image) {
+    if (exixtingBrand?.brand_logo?.public_id) {
+      await deleteFileFromCloudinary(exixtingBrand.brand_logo.public_id);
+    }
+  }
+  //* upload new image
+  const { path, public_id } = await sendFileToCloudinary(image, "/brand_logo");
   const brand = await Brand.findByIdAndUpdate(id, body, {
     new: true,
     runValidators: true,
@@ -87,11 +97,15 @@ export const updateBrand = catchAsync(async (req: Request, res: Response) => {
 //! delete brand
 export const deleteBrand = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-
   const brand = await Brand.findByIdAndDelete(id);
 
   if (!brand) {
     throw new AppError("Brand not found", 404);
+  }
+//* delete image if exist
+  // const existingBrand = await Brand.findById({ _id: id });
+  if (brand?.brand_logo?.public_id) {
+    await deleteFileFromCloudinary(brand.brand_logo.public_id);
   }
 
   //! success response

@@ -74,7 +74,11 @@ export const updateCategory = catchAsync(
         );
       }
     }
-
+    //* upload new image
+    const { path, public_id } = await sendFileToCloudinary(
+      image,
+      "/category_logo",
+    );
     // if (image) {
     //   const { path, public_id } = await sendFileToCloudinary(image, "/category_logo");
     //   category.category_logo = { path, public_id };
@@ -98,7 +102,6 @@ export const updateCategory = catchAsync(
 export const deleteCategory = catchAsync(
   async (req: Request, res: Response) => {
     const { id } = req.params;
-
     let category = await Category.findById(id);
 
     if (!category) {
