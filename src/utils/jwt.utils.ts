@@ -22,3 +22,13 @@ export const generateJwtToken = (payload: TPayload) => {
     throw error;
   }
 };
+
+//! verify token
+export const verifyToken = (token: string) => {
+  try {
+    return jwt.verify(token, ENV_CONFIG.jwt_secret);
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

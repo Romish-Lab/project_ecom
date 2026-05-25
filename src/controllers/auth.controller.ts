@@ -120,7 +120,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-//
+
 // ========================== UPDATE USER ==========================
 //
 export const update = catchAsync(async (req: Request, res: Response) => {

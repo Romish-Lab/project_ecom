@@ -25,8 +25,25 @@ const userSchema = new mongoose_1.default.Schema({
     phone: {
         type: String,
     },
-    //! role
+    Role: {
+        type: String,
+        enum: ["ADMIN", "USER", "SUPER_ADMIN"],
+        default: "USER",
+    },
     //! profile_image
+    //* {profile_image}:{ _id, path, public_id}
+    // cloudinary
+    profile_image: {
+        type: {
+            path: {
+                type: String,
+            },
+            public_id: {
+                type: String,
+                required: true,
+            },
+        },
+    },
 }, { timestamps: true });
 //! model
 const User = mongoose_1.default.model("user", userSchema);

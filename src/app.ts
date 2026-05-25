@@ -11,7 +11,9 @@ import AppError from "./utils/appError.utils";
 
 //! creating express app instance
 const app = express();
-
+//! cookie parser
+import cookieParser from "cookie-parser";
+app.use(cookieParser());
 //! body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));

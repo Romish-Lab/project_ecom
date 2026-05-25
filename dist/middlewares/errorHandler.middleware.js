@@ -1,10 +1,34 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = void 0;
+const appError_utils_1 = __importDefault(require("../utils/appError.utils"));
 const errorHandler = (error, req, res, next) => {
-    const message = error?.message || "Internal server error";
-    const statusCode = error?.statusCode || 500;
-    const status = error?.status || "error";
+    let message = error?.message || "Internal server error";
+    let statusCode = error?.statusCode || 500;
+    let status = error?.status || "error";
+    //! custom app error
+    if (error instanceof appError_utils_1.default) {
+        message = error.message;
+        statusCode = error.statusCode;
+        status = error.status;
+    }
+    //! mongoose error
+    if (error.name === "MongooseError") {
+        message = error.message;
+        statusCode = 400;
+        status = "fail";
+    }
+    //! validation error
+    if (error.name === "ValidationError") {
+        message = Object.values(error.errors)
+            .map((err) => err.message)
+            .join(",");
+        statusCode = 422;
+        status = "fail";
+    }
     //* error response
     res.status(statusCode).json({
         message,
