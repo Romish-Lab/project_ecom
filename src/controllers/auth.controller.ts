@@ -239,7 +239,7 @@ export const deleteUser = catchAsync(async (req: Request, res: Response) => {
 export const changeProfilePicture = catchAsync(
   async (req: Request, res: Response) => {
     const image = req.file as Express.Multer.File;
-    const { id } = req.params;
+   const id=req.user?._id
 
     const user = await User.findById(id);
 

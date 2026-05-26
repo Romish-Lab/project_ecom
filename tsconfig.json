@@ -12,15 +12,5 @@
     "esModuleInterop": true
   },
   "exclude": ["node_modules"],
-  "include": [
-    "src",
-    "routes",
-    "utils",
-    "app.ts",
-    "server.ts",
-    "middlewares",
-    "models",
-    "src/controllers",
-    "src/config"
-  ]
+  "include": ["src"]
 }

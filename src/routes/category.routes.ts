@@ -37,7 +37,7 @@ router.post(
   create,
 );
 
-//! update category
+//! update category 
 router.put(
   "/:id",
   upload.single("category_logo"),
