@@ -17,7 +17,7 @@ import {
 import ENV_CONFIG from "../config/env.config";
 
 const folder = "/profile_image";
-
+import { sendEmail } from "../utils/sendEmail.utils";
 //
 // ========================== REGISTER ==========================
 //
@@ -52,6 +52,14 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   }
 
   await user.save();
+
+  // after await user.save();
+  await sendEmail({
+    to: user.email,
+    subject: "Welcome to Project Ecommerce!",
+    userName: user.full_name,
+    message: "Your account has been created successfully.",
+  });
 
   const payload = {
     _id: user._id,
@@ -200,6 +208,13 @@ export const changePassword = catchAsync(
     user.password = await hashPassword(newPassword);
 
     await user.save();
+    //! send email notification
+    await sendEmail({
+      to: user.email,
+      subject: "Your password has been changed",
+      userName: user.full_name,
+      message: "Your password has been updated successfully.",
+    });
 
     sendResponse(res, {
       message: "Password updated successfully",
@@ -229,17 +244,26 @@ export const deleteUser = catchAsync(async (req: Request, res: Response) => {
 
   res.clearCookie("access_token");
 
+  // after await user.save();
+  await sendEmail({
+    to: user.email,
+    subject: "Your account has been deleted",
+    userName: user.full_name,
+    message: "Your account has been deleted successfully.",
+  });
   sendResponse(res, {
     message: "User deleted successfully",
     data: null,
     statusCode: 200,
   });
 });
+
+//! change profile picture
 export const changeProfilePicture = catchAsync(
   async (req: Request, res: Response) => {
     const image = req.file as Express.Multer.File;
     const id = req.user?._id;
-
+    if (!image) throw new AppError("Profile image is required", 400);
     const user = await User.findById(id);
 
     if (!user) {
@@ -258,7 +282,12 @@ export const changeProfilePicture = catchAsync(
     user.profile_image = { path, public_id };
 
     await user.save();
-
+    await sendEmail({
+      to: user.email,
+      subject: "Your profile picture has been updated",
+      userName: user.full_name,
+      message: "Your profile picture has been updated successfully.",
+    });
     sendResponse(res, {
       message: "Profile picture updated successfully",
       data: user,
