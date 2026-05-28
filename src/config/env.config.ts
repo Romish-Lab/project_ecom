@@ -17,6 +17,13 @@ const ENV_CONFIG = {
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY as string,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET as string,
+
+  //! email
+  smtp_host: process.env.SMTP_HOST as string,
+  smtp_service: process.env.SMTP_SERVICE as string, 
+  smtp_port: process.env.SMTP_PORT as string,
+  smtp_user: process.env.SMTP_USER as string,
+  smtp_pass: process.env.SMTP_PASS as string,
 };
 
 export default ENV_CONFIG;

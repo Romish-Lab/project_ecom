@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import ENV_CONFIG from "../config/env.config";
 
-type TPayload = {
+export type TPayload = {
   _id: mongoose.Types.ObjectId;
   full_name?: string;
   role: "ADMIN" | "USER" | "SUPER_ADMIN";

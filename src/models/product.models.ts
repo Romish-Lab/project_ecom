@@ -48,18 +48,18 @@ const productSchema = new mongoose.Schema(
         required: [true, "cover_image is required"],
       },
     ],
-    //! category 
+    //! category
     category: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "category is required"],
-      ref: "category",
+      ref: "Category",
     },
 
     //! brand
     brand: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "brand is required"],
-      ref: "brand",
+      ref: "Brand",
     },
     new_arrival: {
       type: Boolean,

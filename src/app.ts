@@ -1,56 +1,46 @@
 import express, { Request, Response, NextFunction } from "express";
-import { errorHandler } from "./middlewares/errorHandler.middleware";
+import cookieParser from "cookie-parser";
 
-//! importing routes
+import { errorHandler } from "./middlewares/errorHandler.middleware";
+import AppError from "./utils/appError.utils";
+
+// routes
 import userRoutes from "./routes/user.routes";
 import authRoutes from "./routes/auth.routes";
 import productRoutes from "./routes/product.routes";
 import categoryRoutes from "./routes/category.routes";
 import brandRoutes from "./routes/brand.routes";
-import AppError from "./utils/appError.utils";
 
-//! creating express app instance
 const app = express();
-//! cookie parser
-import cookieParser from "cookie-parser";
+
+app.set("trust proxy", 1);
+
+// middlewares
 app.use(cookieParser());
-//! body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-//! home route
+// health check
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     message: "Server is up and running",
     success: true,
-    status: "success",
   });
 });
 
-//! using routes
+// routes
 app.use("/api/v1/auth", authRoutes);
-
 app.use("/api/v1/users", userRoutes);
-
 app.use("/api/v1/products", productRoutes);
-
 app.use("/api/v1/categories", categoryRoutes);
-
 app.use("/api/v1/brands", brandRoutes);
 
-//! 404 route handler
+// 404 handler
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // next({
-    const  message= "Route not found"
-    throw new AppError(message,404)
-  //   // status: "fail",
-  //   // success: false,
-  //   // data: null,
-  //   // statusCode: 404,
-  // });
+  next(new AppError("Route not found", 404));
 });
 
-//! global error handler
+// global error handler
 app.use(errorHandler);
 
 export default app;
