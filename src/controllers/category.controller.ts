@@ -77,6 +77,10 @@ export const updateCategory = catchAsync(
           image,
           "/category_logo",
         );
+        body.category_logo = {
+          path,
+          public_id,
+        };
       }
     }
 

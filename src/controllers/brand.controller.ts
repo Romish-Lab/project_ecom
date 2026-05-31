@@ -74,12 +74,16 @@ export const updateBrand = catchAsync(async (req: Request, res: Response) => {
     if (exixtingBrand?.brand_logo?.public_id) {
       await deleteFileFromCloudinary(exixtingBrand.brand_logo.public_id);
     }
-  
+
     //* upload new image
     const { path, public_id } = await sendFileToCloudinary(
       image,
       "/brand_logo",
     );
+    body.brand_logo = {
+      path,
+      public_id,
+    };
   }
 
   const brand = await Brand.findByIdAndUpdate(id, body, {
