@@ -29,7 +29,7 @@ const ENV_CONFIG = {
   jwt_secret: process.env.JWT_SECRET!,
   jwt_expiry: process.env.JWT_EXPIRY || "7d",
 
-  cookie_expiry: process.env.COOKIE_EXPIRY || "7",
+  cookie_expiry: process.env.COOKIE_EXPIRY || "7d",
 
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY!,

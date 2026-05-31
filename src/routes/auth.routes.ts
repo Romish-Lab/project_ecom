@@ -36,7 +36,7 @@ router.put(
 
 //! get profile
 router.get(
-  "/profile",
+  "/profile/:id",
   authenticate(["USER", "ADMIN", "SUPER_ADMIN"]),
   getProfile,
 );

@@ -74,9 +74,14 @@ export const updateBrand = catchAsync(async (req: Request, res: Response) => {
     if (exixtingBrand?.brand_logo?.public_id) {
       await deleteFileFromCloudinary(exixtingBrand.brand_logo.public_id);
     }
+  
+    //* upload new image
+    const { path, public_id } = await sendFileToCloudinary(
+      image,
+      "/brand_logo",
+    );
   }
-  //* upload new image
-  const { path, public_id } = await sendFileToCloudinary(image, "/brand_logo");
+
   const brand = await Brand.findByIdAndUpdate(id, body, {
     new: true,
     runValidators: true,
@@ -102,7 +107,7 @@ export const deleteBrand = catchAsync(async (req: Request, res: Response) => {
   if (!brand) {
     throw new AppError("Brand not found", 404);
   }
-//* delete image if exist
+  //* delete image if exist
   // const existingBrand = await Brand.findById({ _id: id });
   if (brand?.brand_logo?.public_id) {
     await deleteFileFromCloudinary(brand.brand_logo.public_id);

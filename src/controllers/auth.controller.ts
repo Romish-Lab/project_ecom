@@ -1,14 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import User from "../models/user.model";
-
 import AppError from "../utils/appError.utils";
 import { sendResponse } from "../utils/sendResponse.utils";
 import { catchAsync } from "../utils/catchAsync.utils";
-
 import { hashPassword, comparePassword } from "../utils/bcrypt.utils";
-
 import { generateJwtToken } from "../utils/jwt.utils";
-
 import {
   sendFileToCloudinary,
   deleteFileFromCloudinary,
@@ -264,6 +260,7 @@ export const changeProfilePicture = catchAsync(
     const image = req.file as Express.Multer.File;
     const id = req.user?._id;
     if (!image) throw new AppError("Profile image is required", 400);
+
     const user = await User.findById(id);
 
     if (!user) {

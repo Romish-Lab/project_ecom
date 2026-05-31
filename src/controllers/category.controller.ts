@@ -72,13 +72,14 @@ export const updateCategory = catchAsync(
         await deleteFileFromCloudinary(
           existingCategory.category_logo.public_id,
         );
+        //* upload new image
+        const { path, public_id } = await sendFileToCloudinary(
+          image,
+          "/category_logo",
+        );
       }
     }
-    //* upload new image
-    const { path, public_id } = await sendFileToCloudinary(
-      image,
-      "/category_logo",
-    );
+
     // if (image) {
     //   const { path, public_id } = await sendFileToCloudinary(image, "/category_logo");
     //   category.category_logo = { path, public_id };
