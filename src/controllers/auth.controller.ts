@@ -14,6 +14,11 @@ import ENV_CONFIG from "../config/env.config";
 
 const folder = "/profile_image";
 import { sendEmail } from "../utils/sendEmail.utils";
+enum Role {
+  ADMIN = "ADMIN",
+  USER = "USER",
+  SUPER_ADMIN = "SUPER_ADMIN",
+}
 //
 // ========================== REGISTER ==========================
 //
@@ -39,6 +44,8 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     email,
     password: hashedPassword,
     phone,
+    profile_image: { path: "", public_id: "" },
+    user: Role.USER,
   });
 
   if (image) {
