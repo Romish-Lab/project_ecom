@@ -7,6 +7,7 @@ import {
   update,
   getProfile,
   changePassword,
+  changeProfilePicture, //  was missing from imports
 } from "../controllers/auth.controller";
 
 import { multerUploader } from "../middlewares/multer.middlewares";
@@ -23,12 +24,16 @@ router.post("/register", upload.single("profile_image"), register);
 //! login
 router.post("/login", login);
 
-//! delete user
-router.delete("/delete", authenticate(["ADMIN", "SUPER_ADMIN"]), deleteUser);
+//! delete user 
+router.delete(
+  "/delete/:id",
+  authenticate(["ADMIN", "SUPER_ADMIN"]),
+  deleteUser,
+);
 
-//! update user
+//! update user 
 router.put(
-  "/update",
+  "/update/:id",
   authenticate(["ADMIN", "SUPER_ADMIN"]),
   upload.single("profile_image"),
   update,
@@ -41,11 +46,19 @@ router.get(
   getProfile,
 );
 
-//! change password
+//! change password 
 router.post(
   "/change-password",
   authenticate(["USER", "ADMIN", "SUPER_ADMIN"]),
   changePassword,
+);
+
+//! change profile picture 
+router.put(
+  "/change-profile-picture",
+  authenticate(["USER", "ADMIN", "SUPER_ADMIN"]),
+  upload.single("profile_image"),
+  changeProfilePicture,
 );
 
 export default router;
