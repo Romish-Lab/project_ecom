@@ -45,21 +45,20 @@ const productSchema = new mongoose.Schema(
             required: true,
           },
         },
-        required: [true, "cover_image is required"],
       },
     ],
-    //! category
+    //! category : 6a0afd1dc56c20e218d7fcde  / {}
     category: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "category is required"],
-      ref: "Category",
+      ref: "category",
     },
 
     //! brand
     brand: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "brand is required"],
-      ref: "Brand",
+      ref: "brand",
     },
     new_arrival: {
       type: Boolean,
