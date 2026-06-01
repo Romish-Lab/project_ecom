@@ -9,6 +9,12 @@ import {
 } from "../utils/cloudinary.utils";
 import Category from "../models/category.models";
 import Brand from "../models/brand.models";
+
+const folder = "/product_images";
+
+//
+// ========================== CREATE PRODUCT ==========================
+//
 export const createProduct = catchAsync(async (req: Request, res: Response) => {
   const {
     name,
@@ -22,32 +28,30 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
   } = req.body;
 
   const existingCategory = await Category.findById(category);
-  if (!existingCategory) {
-    throw new AppError("Category not found", 404);
-  }
+  if (!existingCategory) throw new AppError("Category not found", 404);
 
   const existingBrand = await Brand.findById(brand);
-  if (!existingBrand) {
-    throw new AppError("Brand not found", 404);
-  }
+  if (!existingBrand) throw new AppError("Brand not found", 404);
 
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
   if (!files?.cover_image?.[0]) {
     throw new AppError("Cover image is required", 400);
   }
-  //! handle cover image
+
+  //! upload cover image
   const { path: coverPath, public_id: coverPublicId } =
-    await sendFileToCloudinary(files.cover_image[0], "/product_images");
-  //! handle multiple images
+    await sendFileToCloudinary(files.cover_image[0], folder);
+
+  //! upload multiple images
   let images: { path: string; public_id: string }[] = [];
   if (files?.images?.length) {
-    const uploadPromises = files.images.map((file) =>
-      sendFileToCloudinary(file, "/product_images"),
+    const uploaded = await Promise.all(
+      files.images.map((file) => sendFileToCloudinary(file, folder)),
     );
-    const uploaded = await Promise.all(uploadPromises);
     images = uploaded.map(({ path, public_id }) => ({ path, public_id }));
   }
+
   //! create product
   const product = await Product.create({
     name,
@@ -62,7 +66,6 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     images,
   });
 
-  //! populate category and brand
   await product.populate(["category", "brand"]);
 
   sendResponse(res, {
@@ -71,169 +74,178 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     statusCode: 201,
   });
 });
-//! get all products
-export const getAllProducts = async (req: Request, res: Response) => {
-  try {
+
+//
+// ========================== GET ALL PRODUCTS ==========================
+//
+export const getAllProducts = catchAsync(
+  async (req: Request, res: Response) => {
     const products = await Product.find()
       .populate("category")
       .populate("brand")
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      success: true,
-      total: products.length,
+    sendResponse(res, {
+      message: "Products fetched successfully",
       data: products,
+      statusCode: 200,
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  },
+);
 
-//! get product by id
-export const getProductById = async (req: Request, res: Response) => {
-  try {
+//
+// ========================== GET PRODUCT BY ID ==========================
+//
+export const getProductById = catchAsync(
+  async (req: Request, res: Response) => {
     const product = await Product.findById(req.params.id)
       .populate("category")
       .populate("brand");
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
+    if (!product) throw new AppError("Product not found", 404);
 
-    return res.status(200).json({
-      success: true,
+    sendResponse(res, {
+      message: "Product fetched successfully",
       data: product,
+      statusCode: 200,
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  },
+);
 
-//! update product
-export const updateProduct = async (req: Request, res: Response) => {
-  try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+//
+// ========================== UPDATE PRODUCT ==========================
+//
+export const updateProduct = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const body = req.body;
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+  const product = await Product.findById(id);
+  if (!product) throw new AppError("Product not found", 404);
+
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+  //! handle cover image update
+  if (files?.cover_image?.[0]) {
+    if (product.cover_image?.public_id) {
+      await deleteFileFromCloudinary(product.cover_image.public_id);
     }
-
-    return res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      data: product,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    const { path, public_id } = await sendFileToCloudinary(
+      files.cover_image[0],
+      folder,
+    );
+    body.cover_image = { path, public_id };
   }
-};
 
-//! delete product
-export const deleteProduct = async (req: Request, res: Response) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+  //! handle multiple images update
+  if (files?.images?.length) {
+    if (product.images?.length) {
+      await Promise.all(
+        product.images.map((product_logo) => deleteFileFromCloudinary(product_logo.public_id)),
+      );
     }
-
-    return res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    const uploaded = await Promise.all(
+      files.images.map((file) => sendFileToCloudinary(file, folder)),
+    );
+    body.images = uploaded.map(({ path, public_id }) => ({ path, public_id }));
   }
-};
 
-//! get products by category
-export const getProductsByCategory = async (req: Request, res: Response) => {
-  try {
-    const products = await Product.find({
-      category: req.params.categoryId,
-    })
-      .populate("category")
-      .populate("brand");
+  const updatedProduct = await Product.findByIdAndUpdate(id, body, {
+    new: true,
+    runValidators: true,
+  }).populate(["category", "brand"]);
 
-    return res.status(200).json({
-      success: true,
-      total: products.length,
-      data: products,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  sendResponse(res, {
+    message: "Product updated successfully",
+    data: updatedProduct,
+    statusCode: 200,
+  });
+});
+
+//
+// ========================== DELETE PRODUCT ==========================
+//
+export const deleteProduct = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const product = await Product.findById(id);
+  if (!product) throw new AppError("Product not found", 404);
+
+  //! delete cover image from cloudinary
+  if (product.cover_image?.public_id) {
+    await deleteFileFromCloudinary(product.cover_image.public_id);
   }
-};
 
-//! get featured products
-export const getFeaturedProducts = async (req: Request, res: Response) => {
-  try {
-    const products = await Product.find({
-      featured: true,
-    })
+  //! delete all extra images from cloudinary
+  if (product.images?.length) {
+    await Promise.all(
+      product.images.map((img) => deleteFileFromCloudinary(img.public_id)),
+    );
+  }
+
+  await Product.findByIdAndDelete(id);
+
+  sendResponse(res, {
+    message: "Product deleted successfully",
+    data: null,
+    statusCode: 200,
+  });
+});
+
+//
+// ========================== GET PRODUCTS BY CATEGORY ==========================
+//
+export const getProductsByCategory = catchAsync(
+  async (req: Request, res: Response) => {
+    const { categoryId } = req.params;
+
+    const existingCategory = await Category.findById(categoryId);
+    if (!existingCategory) throw new AppError("Category not found", 404);
+
+    const products = await Product.find({ category: categoryId })
       .populate("category")
       .populate("brand")
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      success: true,
-      total: products.length,
+    sendResponse(res, {
+      message: "Products fetched successfully",
       data: products,
+      statusCode: 200,
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  },
+);
 
-//! get new arrival products
-export const getNewArrivals = async (req: Request, res: Response) => {
-  try {
-    const products = await Product.find({
-      new_arrival: true,
-    })
+//
+// ========================== GET FEATURED PRODUCTS ==========================
+//
+export const getFeaturedProducts = catchAsync(
+  async (req: Request, res: Response) => {
+    const products = await Product.find({ featured: true })
       .populate("category")
       .populate("brand")
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      success: true,
-      total: products.length,
+    sendResponse(res, {
+      message: "Featured products fetched successfully",
       data: products,
+      statusCode: 200,
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
+  },
+);
+
+//
+// ========================== GET NEW ARRIVALS ==========================
+//
+export const getNewArrivals = catchAsync(
+  async (req: Request, res: Response) => {
+    const products = await Product.find({ new_arrival: true })
+      .populate("category")
+      .populate("brand")
+      .sort({ createdAt: -1 });
+
+    sendResponse(res, {
+      message: "New arrivals fetched successfully",
+      data: products,
+      statusCode: 200,
     });
-  }
-};
+  },
+);

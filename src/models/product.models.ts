@@ -1,6 +1,27 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
+interface IImage {
+  path: string;
+  public_id: string;
+}
 
-const productSchema = new mongoose.Schema(
+
+export interface IProduct extends Document {
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  category: mongoose.Types.ObjectId;
+  brand: mongoose.Types.ObjectId;
+  new_arrival: boolean;
+  featured: boolean;
+  cover_image: IImage;
+  images: IImage[];
+  createdAt: Date;
+  updatedAt: Date;
+} 
+
+
+const productSchema = new Schema<IProduct>(
   {
     name: {
       type: String,
@@ -10,10 +31,11 @@ const productSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      minLength: [25, "atleat 25 char. required"],
+      minLength: [25, "atleast 25 char. required"],
     },
+    
     price: {
-      type: String,
+      type: Number,
       required: [true, "price is required"],
     },
     stock: {
@@ -22,47 +44,31 @@ const productSchema = new mongoose.Schema(
     },
     cover_image: {
       type: {
-        path: {
-          type: String,
-          required: true,
-        },
-        public_id: {
-          type: String,
-          required: true,
-        },
+        path: { type: String, default: "" },
+        public_id: { type: String, default: "" },
       },
       required: [true, "cover_image is required"],
     },
+    
     images: [
       {
-        type: {
-          path: {
-            type: String,
-            required: true,
-          },
-          public_id: {
-            type: String,
-            required: true,
-          },
-        },
+        path: { type: String, default: "" },
+        public_id: { type: String, default: "" },
       },
     ],
-    //! category : 6a0afd1dc56c20e218d7fcde  / {}
     category: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "category is required"],
-      ref: "category",
+      ref: "Category", 
     },
-
-    //! brand
     brand: {
       type: mongoose.Schema.Types.ObjectId,
       required: [true, "brand is required"],
-      ref: "brand",
+      ref: "Brand", 
     },
     new_arrival: {
       type: Boolean,
-      default: true,
+      default: false, 
     },
     featured: {
       type: Boolean,
@@ -72,6 +78,5 @@ const productSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-//! model
-const Product = mongoose.model("product", productSchema);
+const Product = mongoose.model<IProduct>("Product", productSchema);
 export default Product;

@@ -10,7 +10,7 @@ import authRoutes from "./routes/auth.routes";
 import productRoutes from "./routes/product.routes";
 import categoryRoutes from "./routes/category.routes";
 import brandRoutes from "./routes/brand.routes";
-
+import cartRoutes from "./routes/cart.routes";
 const app = express();
 
 app.set("trust proxy", 1);
@@ -34,6 +34,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/brands", brandRoutes);
+app.use("/api/v1/cart", cartRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response, next: NextFunction) => {
