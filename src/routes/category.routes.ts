@@ -1,55 +1,35 @@
 import express from "express";
-
 import {
-  create,
-  deleteCategory,
   getAll,
   getById,
-  updateCategory,
+  create,
+  update, 
+  remove,
 } from "../controllers/category.controller";
-
 import { multerUploader } from "../middlewares/multer.middlewares";
 import { authenticate } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
-//! roles
-enum Role {
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN",
-  USER = "USER",
-}
+//! multer upload
+const upload = multerUploader();
 
-//! get all category
+//! admin roles
+const adminAuth = authenticate(["ADMIN", "SUPER_ADMIN"]);
+
+//! get all categories
 router.get("/", getAll);
 
 //! get category by id
 router.get("/:id", getById);
 
-//! multer upload
-const upload = multerUploader();
-
 //! create category
-router.post(
-  "/",
-  upload.single("category_logo"),
-  authenticate([Role.ADMIN, Role.SUPER_ADMIN]),
-  create,
-);
+router.post("/", adminAuth, upload.single("category_logo"), create);
 
-//! update category 
-router.put(
-  "/:id",
-  upload.single("category_logo"),
-  authenticate([Role.ADMIN, Role.SUPER_ADMIN]),
-  updateCategory,
-);
+//! update category
+router.put("/:id", adminAuth, upload.single("category_logo"), update);
 
 //! delete category
-router.delete(
-  "/:id",
-  authenticate([Role.ADMIN, Role.SUPER_ADMIN]),
-  deleteCategory,
-);
+router.delete("/:id", adminAuth, remove);
 
 export default router;
