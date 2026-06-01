@@ -8,7 +8,7 @@ import { generateJwtToken } from "../utils/jwt.utils";
 import {
   sendFileToCloudinary,
   deleteFileFromCloudinary,
-} from "../utils/claudinady.utils";
+} from "../utils/cloudinary.utils";
 import ENV_CONFIG from "../config/env.config";
 import { sendEmail } from "../utils/sendEmail.utils";
 

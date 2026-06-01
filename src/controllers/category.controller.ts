@@ -1,130 +1,113 @@
 import { Request, Response } from "express";
 import Category from "../models/category.models";
-import AppError from "../utils/appError.utils";
 import { catchAsync } from "../utils/catchAsync.utils";
 import { sendResponse } from "../utils/sendResponse.utils";
+import AppError from "../utils/appError.utils";
 import {
   deleteFileFromCloudinary,
   sendFileToCloudinary,
-} from "../utils/claudinady.utils";
+} from "../utils/cloudinary.utils";
 
-//! get all categories
+const folder = "/categories";
+
+//! get all
 export const getAll = catchAsync(async (req: Request, res: Response) => {
-  const category = await Category.find({});
+  const categories = await Category.find({});
 
   sendResponse(res, {
-    message: "All categories fetched",
-    data: category,
+    message: "categories fetched",
+    data: categories,
     statusCode: 200,
   });
 });
 
-//! get category by id
+//! get by id
 export const getById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const category = await Category.findById(id);
 
-  if (!category) {
-    throw new AppError("Category not found", 404);
-  }
+  if (!category) throw new AppError(`category ${id} not found`, 404);
 
   sendResponse(res, {
-    message: `Category with id ${id} fetched`,
+    message: `category ${id} fetched`,
     data: category,
     statusCode: 200,
   });
 });
 
-//! create category
+//! create
 export const create = catchAsync(async (req: Request, res: Response) => {
-  const body = req.body;
-  const image = req.file;
+  const { name, description } = req.body;
+  const image = req.file as Express.Multer.File;
 
-  const category = await Category.create(body);
+  if (!name) throw new AppError("name is required", 400);
+  if (!image) throw new AppError("image is required", 400);
 
-  if (image) {
-    const { path, public_id } = await sendFileToCloudinary(
-      image,
-      "/category_logo",
-    );
-    category.category_logo = { path, public_id };
-    await category.save();
-  }
+  const { path, public_id } = await sendFileToCloudinary(image, folder);
+
+  const category = new Category({
+    name,
+    description,
+
+    category_logo: { path, public_id },
+  });
+
+  await category.save();
 
   sendResponse(res, {
-    message: "Category created successfully",
+    message: "category created",
     data: category,
     statusCode: 201,
   });
 });
 
-//! update category
-export const updateCategory = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const body = req.body;
-    const image = req.file as Express.Multer.File;
-    const existingCategory = await Category.findById({ _id: id });
+//! update
+export const update = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+  const image = req.file as Express.Multer.File;
 
-    if (image) {
-      if (existingCategory?.category_logo?.public_id) {
-        await deleteFileFromCloudinary(
-          existingCategory.category_logo.public_id,
-        );
-        //* upload new image
-        const { path, public_id } = await sendFileToCloudinary(
-          image,
-          "/category_logo",
-        );
-        body.category_logo = {
-          path,
-          public_id,
-        };
-      }
-    }
+  const category = await Category.findById(id);
+  if (!category) throw new AppError(`category ${id} not found`, 404);
 
-    // if (image) {
-    //   const { path, public_id } = await sendFileToCloudinary(image, "/category_logo");
-    //   category.category_logo = { path, public_id };
-    //   await category.save();
-    // }
-    const category = await Category.findByIdAndUpdate(id, body, { new: true });
+  if (name) category.name = name;
+  if (description) category.description = description;
 
-    if (!category) {
-      throw new AppError("Category not found", 404);
-    }
-
-    sendResponse(res, {
-      message: `Category with id ${id} updated successfully`,
-      data: category,
-      statusCode: 200,
-    });
-  },
-);
-
-//! delete category
-export const deleteCategory = catchAsync(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    let category = await Category.findById(id);
-
-    if (!category) {
-      throw new AppError("Category not found", 404);
-    }
-
-    //! delete image from cloudinary if exists
+  if (image) {
     if (category.category_logo?.public_id) {
       await deleteFileFromCloudinary(category.category_logo.public_id);
     }
+    const { path, public_id } = await sendFileToCloudinary(image, folder);
 
-    //! delete category from DB
-    await Category.findByIdAndDelete(id);
+    category.category_logo = { path, public_id };
+  }
 
-    sendResponse(res, {
-      message: "Category deleted successfully",
-      data: category,
-      statusCode: 200,
-    });
-  },
-);
+  await category.save();
+
+  sendResponse(res, {
+    message: `category ${id} updated`,
+    data: category,
+    statusCode: 200,
+  });
+});
+
+//! delete
+export const remove = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const category = await Category.findById(id);
+  if (!category) throw new AppError(`category ${id} not found`, 404);
+
+  if (category.category_logo?.public_id) {
+    await deleteFileFromCloudinary(category.category_logo.public_id);
+  }
+
+  await category.deleteOne();
+
+  sendResponse(res, {
+    message: `category ${id} deleted`,
+    data: null,
+    statusCode: 200,
+  });
+});

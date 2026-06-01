@@ -6,7 +6,7 @@ import { sendResponse } from "../utils/sendResponse.utils";
 import {
   deleteFileFromCloudinary,
   sendFileToCloudinary,
-} from "../utils/claudinady.utils";
+} from "../utils/cloudinary.utils";
 
 const folder = "/brand_logo";
 
