@@ -34,31 +34,27 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const categorySchema = new mongoose_1.Schema({
-    name: {
-        type: String,
-        required: [true, "name is required"],
-        minLength: [3, "name must be 3 char. long"],
-        trim: true,
+const cartSchema = new mongoose_1.Schema({
+    user: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "user",
+        required: [true, "user is required"],
     },
-    description: {
-        type: String,
-        minLength: [10, "Description must be 10 char long"],
-        trim: true,
-    },
-    category_logo: {
-        required: [true, "category_logo is required"], //! this is for cloudinary image, not for validation, because we are handling validation in controller
-        type: {
-            path: {
-                type: String,
-                default: "", //  default added so it works without image
+    items: [
+        {
+            product: {
+                type: mongoose_1.default.Schema.Types.ObjectId,
+                ref: "product",
+                required: [true, "product is required"],
             },
-            public_id: {
-                type: String,
-                default: "", //  removed required:true, added default instead
+            quantity: {
+                type: Number,
+                default: 1,
+                min: 1,
             },
         },
-    },
+    ],
 }, { timestamps: true });
-const Category = mongoose_1.default.model("Category", categorySchema);
-exports.default = Category;
+//! cart model
+const Cart = mongoose_1.default.model("cart", cartSchema);
+exports.default = Cart;

@@ -1,21 +1,89 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importDefault(require("mongoose"));
-const productSchema = new mongoose_1.default.Schema({
+const mongoose_1 = __importStar(require("mongoose"));
+const productSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: [true, "name is required"],
-        minLength: [3, "Name must be 3 char. long"],
         trim: true,
     },
     description: {
         type: String,
         trim: true,
+        minLength: [25, "atleast 25 char. required"],
+    },
+    price: {
+        type: Number,
+        required: [true, "price is required"],
+    },
+    stock: {
+        type: Number,
+        required: [true, "stock is required"],
+    },
+    cover_image: {
+        type: {
+            path: { type: String, default: "" },
+            public_id: { type: String, default: "" },
+        },
+        required: [true, "cover_image is required"],
+    },
+    images: [
+        {
+            path: { type: String, default: "" },
+            public_id: { type: String, default: "" },
+        },
+    ],
+    category: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        required: [true, "category is required"],
+        ref: "Category",
+    },
+    brand: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        required: [true, "brand is required"],
+        ref: "Brand",
+    },
+    new_arrival: {
+        type: Boolean,
+        default: false,
+    },
+    featured: {
+        type: Boolean,
+        default: false,
     },
 }, { timestamps: true });
-//! model
-const Product = mongoose_1.default.model("product", productSchema);
+const Product = mongoose_1.default.model("Product", productSchema);
 exports.default = Product;

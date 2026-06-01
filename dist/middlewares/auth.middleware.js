@@ -4,45 +4,49 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authenticate = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-require("cookie-parser");
 const appError_utils_1 = __importDefault(require("../utils/appError.utils"));
+const jwt_utils_1 = require("../utils/jwt.utils");
 const env_config_1 = __importDefault(require("../config/env.config"));
-const authenticate = () => {
+const authenticate = (roles) => {
     return async (req, res, next) => {
         try {
-            const access_token = req.cookies?.["access_token"];
+            //! get token from req cookie
+            const cookies = req.cookies || {};
+            const access_token = cookies["access_token"];
+            console.log(access_token);
             if (!access_token) {
                 throw new appError_utils_1.default("Unauthorized. Access denied", 401);
             }
-            const decoded_data = jsonwebtoken_1.default.verify(access_token, env_config_1.default.jwt_secret);
-            if (!decoded_data || typeof decoded_data === "string") {
-                throw new appError_utils_1.default("Invalid token", 401);
+            //! verify
+            const decoded_data = (0, jwt_utils_1.verifyToken)(access_token);
+            if (!decoded_data) {
+                throw new appError_utils_1.default("Unauthorized. Access denied", 401);
             }
-            if (decoded_data.exp && Date.now() > decoded_data.exp * 1000) {
+            //! check token expired or not
+            if (Date.now() > decoded_data.exp * 1000) {
                 res.clearCookie("access_token", {
-                    httpOnly: true,
-                    secure: env_config_1.default.node_env === "production",
-                    sameSite: "strict",
+                    httpOnly: env_config_1.default.node_env === "development" ? false : true,
+                    maxAge: Date.now(),
+                    secure: env_config_1.default.node_env === "development" ? false : true,
+                    sameSite: env_config_1.default.node_env === "development" ? "lax" : "none",
                 });
-                throw new appError_utils_1.default("Session expired. Please login again", 401);
+                throw new appError_utils_1.default("Token expired. Access denied", 401);
             }
             req.user = decoded_data;
+            if (roles && !roles.includes(decoded_data.role)) {
+                throw new appError_utils_1.default("Forbidden. Access denied", 403);
+            }
+            //! add logged in user data to req object
+            req.user = {
+                _id: decoded_data._id,
+                full_name: decoded_data.full_name,
+                email: decoded_data.email,
+                role: decoded_data.role,
+            };
             next();
         }
         catch (error) {
-            if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
-                res.clearCookie("access_token", {
-                    httpOnly: true,
-                    secure: env_config_1.default.node_env === "production",
-                    sameSite: "strict",
-                });
-                return next(new appError_utils_1.default("Session expired. Please login again", 401));
-            }
-            if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
-                return next(new appError_utils_1.default("Invalid token", 401));
-            }
-            return next(error);
+            next(error);
         }
     };
 };

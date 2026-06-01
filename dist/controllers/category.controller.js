@@ -3,94 +3,94 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteCategory = exports.updateCategory = exports.create = exports.getById = exports.getAll = void 0;
+exports.remove = exports.update = exports.create = exports.getById = exports.getAll = void 0;
 const category_models_1 = __importDefault(require("../models/category.models"));
-const appError_utils_1 = __importDefault(require("../utils/appError.utils"));
 const catchAsync_utils_1 = require("../utils/catchAsync.utils");
 const sendResponse_utils_1 = require("../utils/sendResponse.utils");
-const claudinady_utils_1 = require("../utils/claudinady.utils");
-//! get all categories
+const appError_utils_1 = __importDefault(require("../utils/appError.utils"));
+const cloudinary_utils_1 = require("../utils/cloudinary.utils");
+const folder = "/categories";
+//! get all
 exports.getAll = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
-    const category = await category_models_1.default.find({});
+    const categories = await category_models_1.default.find({});
     (0, sendResponse_utils_1.sendResponse)(res, {
-        message: "All categories fetched",
-        data: category,
+        message: "categories fetched",
+        data: categories,
         statusCode: 200,
     });
 });
-//! get category by id
+//! get by id
 exports.getById = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { id } = req.params;
     const category = await category_models_1.default.findById(id);
-    if (!category) {
-        throw new appError_utils_1.default("Category not found", 404);
-    }
+    if (!category)
+        throw new appError_utils_1.default(`category ${id} not found`, 404);
     (0, sendResponse_utils_1.sendResponse)(res, {
-        message: `Category with id ${id} fetched`,
+        message: `category ${id} fetched`,
         data: category,
         statusCode: 200,
     });
 });
-//! create category
+//! create
 exports.create = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
-    const body = req.body;
+    const { name, description } = req.body;
     const image = req.file;
-    const category = await category_models_1.default.create(body);
-    if (image) {
-        const { path, public_id } = await (0, claudinady_utils_1.sendFileToCloudinary)(image, "/category_logo");
-        category.category_logo = { path, public_id };
-        await category.save();
-    }
+    if (!name)
+        throw new appError_utils_1.default("name is required", 400);
+    if (!image)
+        throw new appError_utils_1.default("image is required", 400);
+    const { path, public_id } = await (0, cloudinary_utils_1.sendFileToCloudinary)(image, folder);
+    const category = new category_models_1.default({
+        name,
+        description,
+        category_logo: { path, public_id },
+    });
+    await category.save();
     (0, sendResponse_utils_1.sendResponse)(res, {
-        message: "Category created successfully",
+        message: "category created",
         data: category,
         statusCode: 201,
     });
 });
-//! update category
-exports.updateCategory = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
+//! update
+exports.update = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { id } = req.params;
-    const body = req.body;
+    const { name, description } = req.body;
     const image = req.file;
-    const existingCategory = await category_models_1.default.findById({ _id: id });
+    const category = await category_models_1.default.findById(id);
+    if (!category)
+        throw new appError_utils_1.default(`category ${id} not found`, 404);
+    if (name)
+        category.name = name;
+    if (description)
+        category.description = description;
     if (image) {
-        if (existingCategory?.category_logo?.public_id) {
-            await (0, claudinady_utils_1.deleteFileFromCloudinary)(existingCategory.category_logo.public_id);
+        if (category.category_logo?.public_id) {
+            await (0, cloudinary_utils_1.deleteFileFromCloudinary)(category.category_logo.public_id);
         }
+        const { path, public_id } = await (0, cloudinary_utils_1.sendFileToCloudinary)(image, folder);
+        category.category_logo = { path, public_id };
     }
-    //* upload new image
-    const { path, public_id } = await (0, claudinady_utils_1.sendFileToCloudinary)(image, "/category_logo");
-    // if (image) {
-    //   const { path, public_id } = await sendFileToCloudinary(image, "/category_logo");
-    //   category.category_logo = { path, public_id };
-    //   await category.save();
-    // }
-    const category = await category_models_1.default.findByIdAndUpdate(id, body, { new: true });
-    if (!category) {
-        throw new appError_utils_1.default("Category not found", 404);
-    }
+    await category.save();
     (0, sendResponse_utils_1.sendResponse)(res, {
-        message: `Category with id ${id} updated successfully`,
+        message: `category ${id} updated`,
         data: category,
         statusCode: 200,
     });
 });
-//! delete category
-exports.deleteCategory = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
+//! delete
+exports.remove = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { id } = req.params;
-    let category = await category_models_1.default.findById(id);
-    if (!category) {
-        throw new appError_utils_1.default("Category not found", 404);
-    }
-    //! delete image from cloudinary if exists
+    const category = await category_models_1.default.findById(id);
+    if (!category)
+        throw new appError_utils_1.default(`category ${id} not found`, 404);
     if (category.category_logo?.public_id) {
-        await (0, claudinady_utils_1.deleteFileFromCloudinary)(category.category_logo.public_id);
+        await (0, cloudinary_utils_1.deleteFileFromCloudinary)(category.category_logo.public_id);
     }
-    //! delete category from DB
-    await category_models_1.default.findByIdAndDelete(id);
+    await category.deleteOne();
     (0, sendResponse_utils_1.sendResponse)(res, {
-        message: "Category deleted successfully",
-        data: category,
+        message: `category ${id} deleted`,
+        data: null,
         statusCode: 200,
     });
 });

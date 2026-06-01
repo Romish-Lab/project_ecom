@@ -6,16 +6,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const category_controller_1 = require("../controllers/category.controller");
 const multer_middlewares_1 = require("../middlewares/multer.middlewares");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = express_1.default.Router();
-//! get all category
+//! multer upload666
+const upload = (0, multer_middlewares_1.multerUploader)();
+//! admin roles
+const adminAuth = (0, auth_middleware_1.authenticate)(["ADMIN", "SUPER_ADMIN"]);
+//! get all categories
 router.get("/", category_controller_1.getAll);
 //! get category by id
 router.get("/:id", category_controller_1.getById);
 //! create category
-const upload = (0, multer_middlewares_1.multerUploader)();
-router.post("/", upload.single("category_logo"), category_controller_1.create);
+router.post("/", adminAuth, upload.single("category_logo"), category_controller_1.create);
 //! update category
-router.put("/:id", category_controller_1.updateCategory);
+router.put("/:id", adminAuth, upload.single("category_logo"), category_controller_1.update);
 //! delete category
-router.delete("/:id", category_controller_1.deleteCategory);
+router.delete("/:id", adminAuth, category_controller_1.remove);
 exports.default = router;

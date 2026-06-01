@@ -8,12 +8,11 @@ const brand_models_1 = __importDefault(require("../models/brand.models"));
 const appError_utils_1 = __importDefault(require("../utils/appError.utils"));
 const catchAsync_utils_1 = require("../utils/catchAsync.utils");
 const sendResponse_utils_1 = require("../utils/sendResponse.utils");
-const claudinady_utils_1 = require("../utils/claudinady.utils");
+const cloudinary_utils_1 = require("../utils/cloudinary.utils");
+const folder = "/brand_logo";
 //! get all brands
 exports.getAll = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
-    const filter = {};
-    const brands = await brand_models_1.default.find(filter);
-    //! success response
+    const brands = await brand_models_1.default.find({});
     (0, sendResponse_utils_1.sendResponse)(res, {
         message: "All brands fetched",
         data: brands,
@@ -24,10 +23,8 @@ exports.getAll = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
 exports.getById = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { id } = req.params;
     const brand = await brand_models_1.default.findById(id);
-    if (!brand) {
+    if (!brand)
         throw new appError_utils_1.default("Brand not found", 404);
-    }
-    //! success response
     (0, sendResponse_utils_1.sendResponse)(res, {
         message: `Brand with ${id} fetched`,
         data: brand,
@@ -38,16 +35,13 @@ exports.getById = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
 exports.createBrand = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const body = req.body;
     const image = req.file;
-    //* create brand
     const brand = await brand_models_1.default.create(body);
     if (image) {
-        const { path, public_id } = await (0, claudinady_utils_1.sendFileToCloudinary)(image, "/brand_logo");
-        brand.brand_logo = {
-            path,
-            public_id,
-        };
+        const { path, public_id } = await (0, cloudinary_utils_1.sendFileToCloudinary)(image, folder);
+        brand.brand_logo = { path, public_id };
+        // ✅ Fixed: brand.save() was missing — image was uploaded but never persisted
+        await brand.save();
     }
-    //! success response
     (0, sendResponse_utils_1.sendResponse)(res, {
         message: "Brand created successfully",
         data: brand,
@@ -59,41 +53,41 @@ exports.updateBrand = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { id } = req.params;
     const body = req.body;
     const image = req.file;
-    const exixtingBrand = await brand_models_1.default.findById({ _id: id });
+    // ✅ Fixed: check brand exists before doing anything
+    const existingBrand = await brand_models_1.default.findById(id);
+    if (!existingBrand)
+        throw new appError_utils_1.default("Brand not found", 404);
     if (image) {
-        if (exixtingBrand?.brand_logo?.public_id) {
-            await (0, claudinady_utils_1.deleteFileFromCloudinary)(exixtingBrand.brand_logo.public_id);
+        // ✅ Fixed: delete old image from cloudinary if exists
+        if (existingBrand?.brand_logo?.public_id) {
+            await (0, cloudinary_utils_1.deleteFileFromCloudinary)(existingBrand.brand_logo.public_id);
         }
+        // ✅ Fixed: new image path/public_id was never saved to body before
+        const { path, public_id } = await (0, cloudinary_utils_1.sendFileToCloudinary)(image, folder);
+        body.brand_logo = { path, public_id };
     }
-    //* upload new image
-    const { path, public_id } = await (0, claudinady_utils_1.sendFileToCloudinary)(image, "/brand_logo");
-    const brand = await brand_models_1.default.findByIdAndUpdate(id, body, {
+    const updatedBrand = await brand_models_1.default.findByIdAndUpdate(id, body, {
         new: true,
         runValidators: true,
     });
-    if (!brand) {
-        throw new appError_utils_1.default("Brand not found", 404);
-    }
-    //! success response
     (0, sendResponse_utils_1.sendResponse)(res, {
         message: `Brand with id ${id} updated successfully`,
-        data: brand,
+        data: updatedBrand,
         statusCode: 200,
     });
 });
 //! delete brand
 exports.deleteBrand = (0, catchAsync_utils_1.catchAsync)(async (req, res) => {
     const { id } = req.params;
-    const brand = await brand_models_1.default.findByIdAndDelete(id);
-    if (!brand) {
+    // ✅ Fixed: find first then delete so we can access brand_logo before it's gone
+    const brand = await brand_models_1.default.findById(id);
+    if (!brand)
         throw new appError_utils_1.default("Brand not found", 404);
-    }
-    //* delete image if exist
-    // const existingBrand = await Brand.findById({ _id: id });
+    // ✅ Fixed: delete image from cloudinary BEFORE deleting from DB
     if (brand?.brand_logo?.public_id) {
-        await (0, claudinady_utils_1.deleteFileFromCloudinary)(brand.brand_logo.public_id);
+        await (0, cloudinary_utils_1.deleteFileFromCloudinary)(brand.brand_logo.public_id);
     }
-    //! success response
+    await brand_models_1.default.findByIdAndDelete(id);
     (0, sendResponse_utils_1.sendResponse)(res, {
         message: "Brand deleted successfully",
         data: brand,
